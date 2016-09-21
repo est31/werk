@@ -2,6 +2,20 @@
 
 Opus decoder. WIP.
 
+## Roadmap
+
+- [ ] Create a directory dev which contains a separate crate that uses this one
+- [ ] Make that crate use the ogg crate to decode a passed ogg file
+- [ ] Decode ID and comment headers from [RFC 7845](https://tools.ietf.org/html/rfc7845)
+- [ ] Implement the frame packing
+- [ ] Implement the range decoder
+- [ ] In separate repo: Create FFI for the reference decoder and try to modularize its silk and celt decoders
+- [ ] Use the silk and celt decoders from the FFI to test the range decoder
+- [ ] Implement the SILK part
+- [ ] Implement the CELT part
+- [ ] ??
+- [ ] Profit!
+
 ## Name
 
 The name comes from german "Werk" and means the same as "opus".
