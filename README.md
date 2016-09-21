@@ -6,6 +6,7 @@ Opus decoder. WIP.
 
 - [ ] Create a directory dev which contains a separate crate that uses this one
 - [ ] Make that crate use the ogg crate to decode a passed ogg file
+- [ ] Find some freely licensed opus media files on static urls and use the `test-assets` crate to keep them cached, like lewton does it
 - [ ] Decode ID and comment headers from [RFC 7845](https://tools.ietf.org/html/rfc7845)
 - [ ] Implement the frame packing
 - [ ] Implement the range decoder
@@ -13,6 +14,9 @@ Opus decoder. WIP.
 - [ ] Use the silk and celt decoders from the FFI to test the range decoder
 - [ ] Implement the SILK part
 - [ ] Implement the CELT part
+- [ ] Get pure rust decoding working
+- [ ] 0.1.0 release: release this as MVP on crates.io
+- [ ] Work on encoder
 - [ ] ??
 - [ ] Profit!
 
