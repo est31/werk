@@ -1,0 +1,7 @@
+[package]
+name = "werk"
+description = "WIP opus decoder"
+version = "0.1.0"
+authors = ["est31 <MTest31@outlook.com>", "Paul Davey <plmdvy@gmail.com>"]
+
+[dependencies]
