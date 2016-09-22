@@ -23,3 +23,50 @@ extern crate ogg;
 
 #[cfg(feature = "ogg")]
 pub mod inside_ogg;
+
+use std::io;
+use ogg::OggReadError;
+
+#[derive(Debug)]
+pub enum OpusError {
+	IoError(io::Error),
+	#[cfg(feature = "ogg")]
+	OggError(OggReadError),
+}
+
+
+impl std::error::Error for OpusError {
+	fn description(&self) -> &str {
+		match self {
+			&OpusError::IoError(_) => "IO error",
+			#[cfg(feature = "ogg")]
+			&OpusError::OggError(ref e) => e.description(),
+		}
+	}
+
+	fn cause(&self) -> Option<&std::error::Error> {
+		match self {
+			&OpusError::IoError(ref err) => Some(err as &std::error::Error),
+			_ => None
+		}
+	}
+}
+
+impl std::fmt::Display for OpusError {
+	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+		write!(fmt, "{}", std::error::Error::description(self))
+	}
+}
+
+impl From<io::Error> for OpusError {
+	fn from(err :io::Error) -> OpusError {
+		OpusError::IoError(err)
+	}
+}
+
+#[cfg(feature = "ogg")]
+impl From<OggReadError> for OpusError {
+	fn from(err :OggReadError) -> OpusError {
+		OpusError::OggError(err)
+	}
+}
