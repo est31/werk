@@ -72,6 +72,11 @@ pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
 			channel_mapping : channel_mapping,
 		})
 	};
+	// TODO add checks, like
+	// * ensuring that output_channels is 1 or 2 when mapping family == 0
+	// * ensuring that channel mapping entries are smaller than
+	//   coupled_stream_count + stream_count
+	// * stuff like that.
 	return Ok(IdentHeader {
 		version : opus_version,
 		output_channels : output_channels,
