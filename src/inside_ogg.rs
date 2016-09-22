@@ -37,8 +37,9 @@ pub struct IdentHeader {
 }
 
 pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
+	// The magic is "OpusHead".
 	let opus_magic = &[0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64];
-	if ! packet.starts_with(opus_magic) {
+	if !packet.starts_with(opus_magic) {
 		// TODO return an error
 		panic!("ERROR ident packet has no opus magic (TODO manage this via Result)");
 	}
@@ -71,7 +72,6 @@ pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
 			channel_mapping : channel_mapping,
 		})
 	};
-	// TODO read channel mapping table
 	return Ok(IdentHeader {
 		version : opus_version,
 		output_channels : output_channels,
@@ -83,4 +83,54 @@ pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
 	});
 }
 
-// TODO read comment header
+#[derive(Debug)]
+pub struct CommentHeader {
+	vendor :String,
+	comment_list :Vec<(String, String)>,
+}
+
+pub fn read_comment_header(packet :&[u8]) -> Result<CommentHeader, OpusError> {
+	// The magic is "OpusTags".
+	let comment_magic = &[0x4f, 0x70, 0x75, 0x73, 0x54, 0x61, 0x67, 0x73];
+	if !packet.starts_with(comment_magic) {
+		// TODO return an error
+		panic!("ERROR comment packet has no opus magic (TODO manage this via Result)");
+	}
+	let mut rdr = Cursor::new(&packet[comment_magic.len() ..]);
+	use std::io::Read;
+
+	// First read the vendor string
+	let vendor_length = try!(rdr.read_u32::<LittleEndian>()) as usize;
+	// TODO fix this, we initialize memory for NOTHING!!! Out of some reason, this is seen as "unsafe" by rustc.
+	let mut vendor_buf = vec![0; vendor_length];
+	try!(rdr.read_exact(&mut vendor_buf));
+	// TODO use try macro instead
+	let vendor = String::from_utf8(vendor_buf).expect("UTF-8 decode error");
+
+	// Now read the comments
+	let comment_count = try!(rdr.read_u32::<LittleEndian>()) as usize;
+	let mut comment_list = Vec::with_capacity(comment_count);
+	for _ in 0 .. comment_count {
+		let comment_length = try!(rdr.read_u32::<LittleEndian>()) as usize;
+		// TODO fix this, we initialize memory for NOTHING!!! Out of some reason, this is seen as "unsafe" by rustc.
+		let mut comment_buf = vec![0; comment_length];
+		try!(rdr.read_exact(&mut comment_buf));
+		// TODO use try macro instead
+		let comment = String::from_utf8(comment_buf).expect("UTF-8 decode error");
+		let eq_idx = match comment.find("=") {
+			Some(k) => k,
+			// Return an error here for closer compliance with the spec.
+			// It appears that some files have fields without a = sign in the comments.
+			// Well there is not much we can do but gracefully ignore their stuff.
+			None => continue
+		};
+		let (key_eq, val) = comment.split_at(eq_idx + 1);
+		let (key, _) = key_eq.split_at(eq_idx);
+		comment_list.push((String::from(key), String::from(val)));
+	}
+	let hdr :CommentHeader = CommentHeader {
+		vendor : vendor,
+		comment_list : comment_list,
+	};
+	return Ok(hdr);
+}

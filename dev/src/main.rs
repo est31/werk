@@ -32,8 +32,10 @@ fn run_decode() {
 	let mut frdr = try!(File::open(file_path));
 	let mut rdr = PacketReader::new(&mut frdr);
 
-	let pck = try!(rdr.read_packet());
-	let hdr = try!(read_ident_header(&pck.data));
+	let pck_ident = try!(rdr.read_packet());
+	let pck_comment = try!(rdr.read_packet());
+	let ident_hdr = try!(read_ident_header(&pck_ident.data));
+	let comment_hdr = try!(read_comment_header(&pck_comment.data));
 
-	println!("{:?}", hdr);
+	println!("{:?}\n{:?}", ident_hdr, comment_hdr);
 }
