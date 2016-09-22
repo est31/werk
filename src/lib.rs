@@ -16,3 +16,10 @@ This crate implements an `opus` decoder. opus is specified in
 Currently this is in the early stages of development,
 nothing actually works yet.
 */
+
+extern crate byteorder;
+#[cfg(feature = "ogg")]
+extern crate ogg;
+
+#[cfg(feature = "ogg")]
+pub mod inside_ogg;

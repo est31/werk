@@ -1,9 +1,10 @@
 [package]
-name = "werk"
-description = "WIP opus decoder"
+name = "dev"
 version = "0.1.0"
+license = "MIT/Apache-2.0"
 authors = ["est31 <MTest31@outlook.com>", "Paul Davey <plmdvy@gmail.com>"]
 
 [dependencies]
-byteorder = "0.5"
-ogg = { version = "~0.3.3", optional = true }
+werk = { path = "../" }
+ogg = "~0.3.3"
+time = "0.1"
