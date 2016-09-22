@@ -16,6 +16,13 @@ use std::io::Cursor;
 use byteorder::{ReadBytesExt, LittleEndian};
 use ::OpusError;
 
+#[derive(Debug)]
+pub struct ChannelMappingTable {
+	pub stream_count :u8,
+	pub coupled_stream_count :u8,
+	pub channel_mapping :Vec<u8>,
+}
+
 /// The ident header, as of
 /// [RFC 7845, section 5.1](https://tools.ietf.org/html/rfc7845#section-5.1)
 #[derive(Debug)]
@@ -26,8 +33,7 @@ pub struct IdentHeader {
 	pub input_sample_rate :u32,
 	pub output_gain :i16,
 	pub channel_mapping_family :u8,
-	// TODO channel mapping table:
-	// https://tools.ietf.org/html/rfc7845#section-5.1.1
+	pub channel_mapping_table :Option<ChannelMappingTable>,
 }
 
 pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
@@ -50,6 +56,21 @@ pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
 	let input_sample_rate = try!(rdr.read_u32::<LittleEndian>());
 	let output_gain = try!(rdr.read_i16::<LittleEndian>());
 	let channel_mapping_family = try!(rdr.read_u8());
+	let channel_mapping_table =	if channel_mapping_family == 0 {
+		None
+	} else {
+		let stream_count = try!(rdr.read_u8());
+		let coupled_stream_count = try!(rdr.read_u8());
+		let mut channel_mapping = Vec::with_capacity(output_channels as usize);
+		for _ in 0 .. output_channels {
+			channel_mapping.push(try!(rdr.read_u8()));
+		}
+		Some(ChannelMappingTable {
+			stream_count : stream_count,
+			coupled_stream_count : coupled_stream_count,
+			channel_mapping : channel_mapping,
+		})
+	};
 	// TODO read channel mapping table
 	return Ok(IdentHeader {
 		version : opus_version,
@@ -58,6 +79,7 @@ pub fn read_ident_header(packet :&[u8]) -> Result<IdentHeader, OpusError> {
 		input_sample_rate : input_sample_rate,
 		output_gain : output_gain,
 		channel_mapping_family : channel_mapping_family,
+		channel_mapping_table : channel_mapping_table,
 	});
 }
 
