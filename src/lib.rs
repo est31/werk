@@ -72,3 +72,48 @@ impl From<OggReadError> for OpusError {
 		OpusError::OggError(err)
 	}
 }
+
+/// Signed ilog function (Spec section 1.1.10.)
+fn iilog(val :i64) -> u8 {
+	let mut ret :u8 = 0;
+	let mut v = val;
+	while v > 0 {
+		ret += 1;
+		v = v >> 1;
+	}
+	return ret;
+}
+
+#[test]
+fn test_iilog() {
+	// Test values from the opus spec
+	assert_eq!(iilog(-1), 0);
+	assert_eq!(iilog(0), 0);
+	assert_eq!(iilog(1), 1);
+	assert_eq!(iilog(2), 2);
+	assert_eq!(iilog(3), 2);
+	assert_eq!(iilog(4), 3);
+	assert_eq!(iilog(7), 3);
+}
+
+/// Unsigned ilog function (Spec section 1.1.10.)
+fn uilog(val :u64) -> u8 {
+	let mut ret :u8 = 0;
+	let mut v = val;
+	while v > 0 {
+		ret += 1;
+		v = v >> 1;
+	}
+	return ret;
+}
+
+#[test]
+fn test_uilog() {
+	// Test values from the opus spec
+	assert_eq!(uilog(0), 0);
+	assert_eq!(uilog(1), 1);
+	assert_eq!(uilog(2), 2);
+	assert_eq!(uilog(3), 2);
+	assert_eq!(uilog(4), 3);
+	assert_eq!(uilog(7), 3);
+}
