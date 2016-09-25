@@ -45,6 +45,8 @@ pub enum FrameSize {
 impl TocByte {
 	pub fn get_mode(&self) -> PacketMode {
 		// See "Table 2: TOC Byte Configuration Parameters"
+		// TODO maybe the config part is on the "other side"
+		// of the TOC byte...
 		let config = self.0 & 63;
 		if config <= 11 {
 			return PacketMode::SilkOnly;
