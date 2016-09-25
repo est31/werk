@@ -22,6 +22,7 @@ extern crate byteorder;
 extern crate ogg;
 
 pub mod framing;
+pub mod range;
 
 #[cfg(feature = "ogg")]
 pub mod inside_ogg;
