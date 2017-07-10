@@ -1,0 +1,8 @@
+[package]
+name = "werk"
+version = "0.1.0"
+authors = ["est31 <MTest31@outlook.com>", "The opus project developers"]
+license = "BSD-3-Clause"
+keywords = ["ogg", "opus"]
+
+[dependencies]
