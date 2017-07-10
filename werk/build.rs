@@ -18,7 +18,7 @@ use gcc::Config;
 macro_rules! files_fn {
 	($name:ident; $($($pathseg:ident)/ *.c),*) => {
 		fn $name(cfg :&mut Config) {
-			cfg $(.file(concat!("libopus/",
+			cfg $(.file(concat!("../libopus/",
 				$("/", stringify!($pathseg)),*,
 				".c"
 			)))*;
@@ -177,11 +177,11 @@ files_fn! { silk_files_float;
 fn compile_opus() {
 	let mut cfg = gcc::Config::new();
 	cfg
-		.include("libopus/include")
-		.include("libopus/celt")
-		.include("libopus/silk")
-		.include("libopus/silk/fixed")
-		.include("libopus/silk/float")
+		.include("../libopus/include")
+		.include("../libopus/celt")
+		.include("../libopus/silk")
+		.include("../libopus/silk/fixed")
+		.include("../libopus/silk/float")
 		// Note in configure.ac there are a bunch of such variables defined,
 		// each with AC_DEFINE.
 		// But these two are the required ones
