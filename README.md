@@ -1,6 +1,10 @@
-# werk
+# Werk
 
 A project to rewrite the C components of `libopus` in safe Rust.
+
+## Name
+
+The name comes from german "Werk" and means the same as "opus", just in a different language.
 
 ## License
 
