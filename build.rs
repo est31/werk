@@ -8,6 +8,10 @@
 // this source distribution for details.
 
 extern crate gcc;
+extern crate bindgen;
+
+use std::env;
+use std::path::PathBuf;
 
 use gcc::Config;
 
@@ -170,7 +174,7 @@ files_fn! { silk_files_float;
 	silk/float/sort_FLP.c
 }
 
-fn main() {
+fn compile_opus() {
 	let mut cfg = gcc::Config::new();
 	cfg
 		.include("libopus/include")
@@ -183,13 +187,28 @@ fn main() {
 		// But these two are the required ones
 		.define("OPUS_BUILD", None)
 		.define("USE_ALLOCA", None);
-	if cfg!(debug) {
-		cfg.opt_level(3);
-	}
+	// Always optimize, this is no fun otherwise
+	cfg.opt_level(3);
 	opus_files(&mut cfg);
 	opus_files_float(&mut cfg);
 	celt_files(&mut cfg);
 	silk_files(&mut cfg);
 	silk_files_float(&mut cfg);
 	cfg.compile("libopus.a");
+}
+
+fn generate_bindings() {
+	let bindings = bindgen::Builder::default()
+		.header("src/ffi_wrapper.h")
+		.generate()
+		.expect("Unable to generate API bindings");
+	let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+	bindings
+		.write_to_file(out_path.join("bindings.rs"))
+		.expect("Unable to write bindings.rs file");
+}
+
+fn main() {
+	compile_opus();
+	generate_bindings();
 }

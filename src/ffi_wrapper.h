@@ -7,6 +7,4 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-extern crate libc;
-
-pub mod ffi;
+#include "../libopus/include/opus.h"
