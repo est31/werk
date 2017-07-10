@@ -1,4 +1,4 @@
-// Werk - a pure Rust opus decoder
+// Werk - a pure Rust opus library
 //
 // Copyright (c) 2001-2011 the opus developers, and
 // Copyright (c) 2017 est31 <MTest31@outlook.com>
