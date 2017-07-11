@@ -3,6 +3,8 @@ name = "werk"
 version = "0.1.0"
 authors = ["est31 <MTest31@outlook.com>", "The opus project developers"]
 license = "BSD-3-Clause"
+description = "Pure Rust Opus library"
+repository = "https://github.com/est31/werk"
 keywords = ["ogg", "opus"]
 
 [dependencies]
