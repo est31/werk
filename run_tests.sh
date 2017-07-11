@@ -13,3 +13,5 @@ cd "$cur_dir/werk_test"
 
 cargo run --release --bin test_opus_decode
 cargo run --release --bin test_opus_encode
+cargo run --release --bin test_opus_api
+cargo run --release --bin test_opus_padding
