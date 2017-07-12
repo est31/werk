@@ -7,8 +7,4 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-extern crate libc;
-
-pub mod ffi;
-
-pub mod celt;
+pub mod mathops;
