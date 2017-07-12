@@ -200,6 +200,11 @@ fn compile_opus() {
 fn generate_bindings() {
 	let bindings = bindgen::Builder::default()
 		.header("src/ffi_wrapper.h")
+		.clang_arg("-I../libopus/include")
+		.clang_arg("-I../libopus/celt")
+		.clang_arg("-I../libopus/silk")
+		.clang_arg("-I../libopus/silk/fixed")
+		.clang_arg("-I../libopus/silk/float")
 		.generate()
 		.expect("Unable to generate API bindings");
 	let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
