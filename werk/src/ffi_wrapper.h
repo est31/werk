@@ -8,3 +8,4 @@
 // this source distribution for details.
 
 #include "../../libopus/include/opus.h"
+//#include "../../libopus/celt/entdec.h" // also entenc

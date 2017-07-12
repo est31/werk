@@ -7,4 +7,9 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
+// For the time being, until we are completely Rust,
+// allow bad style
+#![allow(non_camel_case_types)]
+
+pub mod entcode;
 pub mod mathops;
