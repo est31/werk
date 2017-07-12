@@ -11,7 +11,8 @@
 cur_dir=`dirname "$0"`
 cd "$cur_dir/werk_test"
 
-cargo run --release --bin test_opus_decode
-cargo run --release --bin test_opus_encode
-cargo run --release --bin test_opus_api
-cargo run --release --bin test_opus_padding
+tests=`ls src/bin | sort | cut -d. -f1 | grep test`
+
+for test in $tests; do
+	cargo run --release --bin $test
+done
