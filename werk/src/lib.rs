@@ -12,3 +12,8 @@ extern crate libc;
 pub mod ffi;
 
 pub mod celt;
+
+/// Workaround for https://github.com/rust-lang/rust/issues/18807
+pub extern fn so_dead() {
+	println!("");
+}
