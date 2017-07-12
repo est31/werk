@@ -2,3 +2,5 @@ target
 Cargo.lock
 *swp
 test-assets
+
+werk_test/data

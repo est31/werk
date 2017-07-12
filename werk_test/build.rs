@@ -101,8 +101,21 @@ fn opus_tests() {
 	}
 }
 
+fn tools() {
+	program! {
+		src/opus_compare.c;
+		"libopus_compare.a"
+	}
+
+	program! {
+		src/opus_demo.c;
+		"libopus_demo.a"
+	}
+}
+
 fn main() {
 	celt_tests();
 	silk_tests();
 	opus_tests();
+	tools();
 }
