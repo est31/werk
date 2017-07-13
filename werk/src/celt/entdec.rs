@@ -70,6 +70,7 @@ ec_tell() can be used to determine how many bits were needed to decode
 use std::os::raw::*;
 use super::entcode::*;
 use super::mathops::ilog;
+use std::cmp;
 use std::ptr;
 
 pub type ec_dec = ec_ctx;
@@ -135,21 +136,6 @@ pub extern fn ec_dec_init(this :&mut ec_dec, buf :*mut c_uchar, storage :u32) {
 	this.dec_normalize();
 }
 
-
-// This is the rough (non working) translation of a macro "EC_MINI"
-// from in the opus source that cites missing optimisations with very
-// old versions of gcc (3.x) as the reason for this optimized implementation
-// of minimizing numbers
-// maybe std::cmp::min will do
-macro_rules! ec_mini {
-	/*($a:expr, $b:expr) => {
-		($a) + ((($b)-($a))&(-((($b)<($a)) as c_int) as c_uint))
-	};*/
-	($a:expr, $b:expr) => {
-		::std::cmp::min($a, $b)
-	};
-}
-
 #[no_mangle]
 /**
 Calculates the cumulative frequency for the next symbol.
@@ -172,7 +158,11 @@ Return: A cumulative frequency representing the encoded symbol.
 pub extern fn ec_decode(this :&mut ec_dec, ft :c_uint) -> c_uint {
 	this.ext = celt_udiv(this.rng, ft);
 	let s = this.val / this.ext;
-	ft - ec_mini!(s + 1, ft)
+	// libopus uses a macro called "EC_MINI" here,
+	// that has an implementation that runs fast on old (<4.x) gcc
+	// compilers. We just use std and hope that its either similarly
+	// optimized, or that llvm does the optimization for us.
+	ft - cmp::min(s + 1, ft)
 }
 
 #[no_mangle]
@@ -180,7 +170,7 @@ pub extern fn ec_decode(this :&mut ec_dec, ft :c_uint) -> c_uint {
 pub extern fn ec_decode_bin(this :&mut ec_dec, bits :c_uint) -> c_uint {
 	this.ext = this.rng >> bits;
 	let s = this.val / this.ext;
-	(1 << bits) - ec_mini!(s + 1, 1 << bits)
+	(1 << bits) - cmp::min(s + 1, 1 << bits)
 }
 
 #[no_mangle]
@@ -282,7 +272,8 @@ Return: The decoded bits.
 */
 pub extern fn ec_dec_uint(this :&mut ec_dec, mut ft :u32) -> u32 {
 	// In order to optimize EC_ILOG(), it is undefined for the value 0.
-	// TODO is this ^v still relevant??
+	// TODO is this ^v still relevant?? If yes, the requirements
+	// for ft need to be updated.
 	assert!(ft > 1);
 	ft -= 1;
 	let mut ftb = ilog(ft);
