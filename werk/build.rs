@@ -52,7 +52,7 @@ files_fn! { celt_files;
 	// celt/entdec.c,
 	celt/entenc.c,
 	celt/kiss_fft.c,
-	celt/laplace.c,
+	// celt/laplace.c,
 	// celt/mathops.c, -- fixed point stuff still missing
 	celt/mdct.c,
 	celt/modes.c,

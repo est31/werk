@@ -14,3 +14,4 @@
 pub mod entcode;
 pub mod entdec;
 pub mod mathops;
+pub mod laplace;
