@@ -12,4 +12,5 @@
 #![allow(non_camel_case_types)]
 
 pub mod entcode;
+pub mod entdec;
 pub mod mathops;

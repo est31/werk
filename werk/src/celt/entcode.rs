@@ -29,9 +29,27 @@ pub struct ec_ctx {
     pub error :c_int,
 }
 
+impl ec_ctx {
+	pub fn get_buf(&self) -> &[c_uchar] {
+		unsafe {
+			::std::slice::from_raw_parts(self.buf, self.storage as usize)
+		}
+	}
+	pub fn get_buf_mut(&mut self) -> &mut [c_uchar] {
+		unsafe {
+			::std::slice::from_raw_parts_mut(self.buf, self.storage as usize)
+		}
+	}
+}
+
 /// The resolution of fractional-precision bit usage measurements, i.e.,
 /// 3 => 1/8th bits.
 pub const BITRES :usize = 3;
+
+/// The number of bits to use for the range-coded part of unsigned integers.
+pub const EC_UINT_BITS :u32 = 8;
+
+pub const EC_WINDOW_SIZE :u32 = 32;
 
 #[no_mangle]
 /**
@@ -82,4 +100,32 @@ pub extern fn ec_tell_frac_slow(this :&mut ec_ctx) -> u32 {
 		r >>= b;
 	}
 	return nbits - l;
+}
+
+// These constants come from a header called mfrngcod.h but its
+// nowhere used outside of entropy coding, so we included it here.
+
+/// The number of bits to output at a time.
+pub const EC_SYM_BITS :c_int = 8;
+/// The total number of bits in each of the state registers.
+pub const EC_CODE_BITS :c_int = 32;
+/// The maximum symbol value.
+pub const EC_SYM_MAX :c_int = (1 << EC_SYM_BITS) - 1;
+/// Bits to shift by to move a symbol into the high-order position.
+pub const EC_CODE_SHIFT :c_int = EC_CODE_BITS - EC_SYM_BITS - 1;
+/// Carry bit of the high-order range symbol.
+pub const EC_CODE_TOP :u32 = 1 << (EC_CODE_BITS - 1);
+/// Low-order bit of the high-order range symbol.
+pub const EC_CODE_BOT :u32 = EC_CODE_TOP >> EC_SYM_BITS;
+/// The number of bits available for the last, partial symbol in the code field.
+pub const EC_CODE_EXTRA :c_int = (EC_CODE_BITS - 2) % EC_SYM_BITS + 1;
+
+// TODO support USE_SMALL_DIV_TABLE mode for both of these functions
+
+pub fn celt_udiv(n :u32, d :u32) -> u32 {
+	n/d
+}
+
+pub fn celt_sudiv(n :u32, d :u32) -> u32 {
+	n/d
 }
