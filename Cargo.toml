@@ -1,5 +1,6 @@
 [workspace]
 members = [
+	"werk-sys",
 	"werk",
 	"werk_test",
 ]
