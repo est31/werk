@@ -11,7 +11,21 @@
 // allow bad style
 #![allow(non_camel_case_types)]
 
+// OPUS_CLEAR macro:
+macro_rules! slice_clear {
+	($slice:expr) => {{
+		for e in $slice.iter_mut() {
+			*e = 0.0;
+		}
+	}};
+}
+
+#[macro_use]
+pub mod arch;
 pub mod entcode;
 pub mod entdec;
 pub mod mathops;
 pub mod laplace;
+pub mod lpc;
+pub mod pitch;
+
