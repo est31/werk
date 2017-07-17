@@ -20,7 +20,7 @@ extern "C" {
 }
 
 // TODO implement content of pich.c
-// Here we only implement a function from pitch.h
+// Here we only implement some functions from pitch.h
 
 #[inline]
 pub fn xcorr_kernel_rs(x :&[v16], y :* const v16, sum :&mut [v32; 4],
@@ -83,4 +83,13 @@ pub fn xcorr_kernel_rs(x :&[v16], y :* const v16, sum :&mut [v32; 4],
 		},
 		_ => unreachable!(),
 	}
+}
+
+#[inline]
+pub fn inner_prod_rs(x :&[v16], y :&[v16]) -> v16 {
+	let mut xy = 0.0;
+	for (xe, ye) in x.iter().zip(y.iter()) {
+		xy = mac16_16!(xy, *xe, *ye);
+	}
+	xy
 }

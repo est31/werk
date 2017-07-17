@@ -7,12 +7,7 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-// Note in configure.ac there are a bunch of such variables defined,
-// each with AC_DEFINE.
-// But these two are the required ones
+// Only contains some stuff from the header -- for now.
 
-#define OPUS_BUILD
-#define USE_ALLOCA
-
-#include "../../libopus/include/opus.h"
-//#include "../../libopus/celt/.h"
+use std::os::raw::*;
+pub const SPREAD_NONE :c_int = 0;

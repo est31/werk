@@ -72,3 +72,37 @@ fn test_isqrt32() {
 	assert_eq!(isqrt32(14), 3);
 	assert_eq!(isqrt32(42246), 205);
 }
+
+#[inline]
+pub fn fast_atan2(y :f32, x :f32) -> f32 {
+
+	const CA :f32 = 0.43157974;
+	const CB :f32 = 0.67848403;
+	const CC :f32 = 0.08595542;
+	const TAU :f32 = ::std::f32::consts::PI / 2.0;
+
+	macro_rules! signed_tau {
+		($x:expr) => {
+			if $x < 0.0 {
+				-TAU
+			} else {
+				TAU
+			}
+		}
+	}
+
+	let x2 = x * x;
+	let y2 = y * y;
+	// For very small values, we don't care about the answer,
+	// so we can just return 0.
+	if x2 + y2 < 1e-18 {
+		return 0.0;
+	}
+	if x2 < y2 {
+		let den = (y2 + CB * x2) * (y2 + CC * x2);
+		-x * y * (y2 + CA * x2) / den + signed_tau!(y)
+	} else {
+		let den = (x2 + CB * y2) * (x2 + CC * y2);
+		x * y * (x2 + CA * y2) / den + signed_tau!(y) - signed_tau!(x * y)
+	}
+}

@@ -7,12 +7,15 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-// Note in configure.ac there are a bunch of such variables defined,
-// each with AC_DEFINE.
-// But these two are the required ones
+use std::os::raw::*;
+use super::arch::v32;
+use super::entcode::ec_ctx;
 
-#define OPUS_BUILD
-#define USE_ALLOCA
-
-#include "../../libopus/include/opus.h"
-//#include "../../libopus/celt/.h"
+extern "C" {
+	pub fn encode_pulses(y :* const c_int, n :c_int, k :c_int,
+		enc :*mut ec_ctx);
+}
+extern "C" {
+    pub fn decode_pulses(y :* mut c_int, n :c_int, k :c_int,
+		dec :* mut ec_ctx) -> v32;
+}

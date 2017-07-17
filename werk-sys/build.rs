@@ -16,6 +16,9 @@ use std::path::PathBuf;
 use gcc::Config;
 
 macro_rules! files_fn {
+	($name:ident; $($($pathseg:ident)/ *.c),*,) => {
+		files_fn!($name; $($($pathseg)/ *.c),*);
+	};
 	($name:ident; $($($pathseg:ident)/ *.c),*) => {
 		fn $name(cfg :&mut Config) {
 			cfg $(.file(concat!("../libopus/",
@@ -23,7 +26,7 @@ macro_rules! files_fn {
 				".c"
 			)))*;
 		}
-	}
+	};
 }
 
 files_fn! { opus_files;
@@ -60,7 +63,7 @@ files_fn! { celt_files;
 	// celt/celt_lpc.c,
 	celt/quant_bands.c,
 	celt/rate.c,
-	celt/vq.c
+	// celt/vq.c
 }
 
 files_fn! { silk_files;

@@ -28,4 +28,6 @@ pub mod mathops;
 pub mod laplace;
 pub mod lpc;
 pub mod pitch;
-
+pub mod vq;
+pub mod bands;
+pub mod cwrs;
