@@ -47,7 +47,7 @@ pub extern "C" fn isqrt32(mut val: u32) -> c_uint {
 	// Uses the second method from
 	// http://www.azillionmonkeys.com/qed/sqroot.html
 	// The main idea is to search for the largest binary digit b such that
-	// (g+b)*(g+b) <= _val, and add it to the solution g.*/
+	// (g+b)*(g+b) <= _val, and add it to the solution g.
 	loop {
 		let t :u32 = (((g as u32) << 1) + b) << bshift;
 		if t <= val {
