@@ -254,7 +254,8 @@ to 1. This is the function that will typically require the most CPU.
 
 Returns a mask indicating which blocks in the band received pulses.
 */
-pub extern fn alg_quant(x :* mut celt_norm, n :c_int, k :c_int, spread :c_int, b :c_int, enc :&mut ec_ctx, gain :v16, resynth :c_int, arch :c_int) -> c_uint {
+pub extern fn alg_quant(x :* mut celt_norm, n :c_int, k :c_int, spread :c_int, b :c_int,
+		enc :&mut ec_ctx, gain :v16, resynth :c_int, arch :c_int) -> c_uint {
 	assert!(k > 0, "at least one pulse required");
 	assert!(n > 1, "at least one dimensions required");
 
