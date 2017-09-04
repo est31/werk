@@ -59,7 +59,7 @@ files_fn! { celt_files;
 	// celt/mathops.c, -- fixed point stuff still missing
 	celt/mdct.c,
 	celt/modes.c,
-	celt/pitch.c,
+	// celt/pitch.c,
 	// celt/celt_lpc.c,
 	celt/quant_bands.c,
 	celt/rate.c,

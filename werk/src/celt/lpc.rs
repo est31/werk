@@ -213,10 +213,8 @@ pub extern fn _celt_autocorr(x :* const v16, ac :* mut v16,
 		}
 		&xx
 	};
-	unsafe {
-		celt_pitch_xcorr_c(xptr.as_ptr(), xptr.as_ptr(), ac,
-			fast_n, lag + 1, arch);
-	}
+	celt_pitch_xcorr_c(xptr.as_ptr(), xptr.as_ptr(), ac,
+		fast_n, lag + 1, arch);
 	let lag = lag as usize;
 	let ac = unsafe {
 		slice::from_raw_parts_mut(ac, lag)

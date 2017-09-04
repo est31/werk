@@ -39,6 +39,42 @@ macro_rules! unlikely {
 // traits, or risking stuff.
 // We rather have macros for now like C does :)
 
+macro_rules! min16 {
+	($x:expr, $y:expr) => {
+		if $x < $y { $y } else { $y }
+	}
+}
+
+macro_rules! max16 {
+	($x:expr, $y:expr) => {
+		if $x > $y { $y } else { $y }
+	}
+}
+
+macro_rules! min32 {
+	($x:expr, $y:expr) => {
+		if $x < $y { $y } else { $y }
+	}
+}
+
+macro_rules! max32 {
+	($x:expr, $y:expr) => {
+		if $x > $y { $y } else { $y }
+	}
+}
+
+macro_rules! imin {
+	($x:expr, $y:expr) => {
+		if $x < $y { $y } else { $y }
+	}
+}
+
+macro_rules! imax {
+	($x:expr, $y:expr) => {
+		if $x > $y { $y } else { $y }
+	}
+}
+
 pub type v16 = f32;
 pub type v32 = f32;
 pub type v64 = f32;
@@ -49,7 +85,9 @@ pub type celt_enter = f32;
 
 pub const SIG_SHIFT :usize = 12;
 
-// TODO: fill in here
+pub const Q15ONE :f32 = 1.0;
+
+pub const NORM_SCALING :f32 = 1.0;
 
 pub const EPSILON :f32 = 1e-15;
 
@@ -217,7 +255,17 @@ macro_rules! mac16_16 {
 	}
 }
 
-// TODO: fill in here
+macro_rules! mul16_32_q15 {
+	($a:expr, $b:expr) => {
+		$a * $b
+	}
+}
+
+macro_rules! mul16_32_q16 {
+	($a:expr, $b:expr) => {
+		$a * $b
+	}
+}
 
 macro_rules! mul32_32_q31 {
 	($a:expr, $b:expr) => {
