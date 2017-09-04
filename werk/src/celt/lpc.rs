@@ -9,13 +9,15 @@
 
 use std::os::raw::*;
 use std::slice;
-use super::arch::{v16, v32, SIG_SHIFT};
+use super::arch::{v16, v32};
+#[allow(unused_imports)]
+use super::arch::SIG_SHIFT;
 use super::pitch::{xcorr_kernel_rs, celt_pitch_xcorr_c};
 
 #[no_mangle]
 pub extern fn _celt_lpc(lpc :* mut v16, ac :* const v32, p :c_int) {
 	let p = p as usize;
-	let mut lpc = unsafe {
+	let lpc = unsafe {
 		slice::from_raw_parts_mut(lpc, p)
 	};
 	let ac = unsafe {
@@ -62,7 +64,7 @@ pub extern fn celt_fir_c(x :* const v16, num :* const v16, y :* mut v16,
 	let num = unsafe {
 		slice::from_raw_parts(num, ord)
 	};
-	let mut y = unsafe {
+	let y = unsafe {
 		slice::from_raw_parts_mut(y, n)
 	};
 
