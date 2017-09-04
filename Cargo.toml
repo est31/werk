@@ -4,3 +4,6 @@ members = [
 	"werk",
 	"werk_test",
 ]
+
+[profile.release]
+debug = true
