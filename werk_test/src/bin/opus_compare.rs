@@ -9,6 +9,7 @@
 
 #![no_main]
 
+#[allow(unused_extern_crates)]
 extern crate werk_test;
 
 #[link(name="opus_compare", kind="static")]

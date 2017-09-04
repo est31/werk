@@ -9,6 +9,7 @@
 
 #![no_main]
 
+#[allow(unused_extern_crates)]
 extern crate werk_test;
 
 #[link(name="silk_inv_pred_gain", kind="static")]

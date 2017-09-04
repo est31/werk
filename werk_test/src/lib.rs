@@ -7,4 +7,5 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
+#[allow(unused_extern_crates)]
 extern crate werk;
