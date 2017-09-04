@@ -13,14 +13,14 @@ extern crate bindgen;
 use std::env;
 use std::path::PathBuf;
 
-use gcc::Config;
+use gcc::Build;
 
 macro_rules! files_fn {
 	($name:ident; $($($pathseg:ident)/ *.c),*,) => {
 		files_fn!($name; $($($pathseg)/ *.c),*);
 	};
 	($name:ident; $($($pathseg:ident)/ *.c),*) => {
-		fn $name(cfg :&mut Config) {
+		fn $name(cfg :&mut Build) {
 			cfg $(.file(concat!("../libopus/",
 				$("/", stringify!($pathseg)),*,
 				".c"
@@ -178,7 +178,7 @@ files_fn! { silk_files_float;
 }
 
 fn compile_opus() {
-	let mut cfg = gcc::Config::new();
+	let mut cfg = gcc::Build::new();
 	cfg
 		.include("../libopus/include")
 		.include("../libopus/celt")
