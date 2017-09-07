@@ -9,11 +9,11 @@
 
 extern crate gcc;
 
-use gcc::Config;
+use gcc::Build;
 
 macro_rules! program {
 	($($($pathseg:ident)/ *.c),*; $libname:expr) => {{
-		let mut cfg = Config::new();
+		let mut cfg = Build::new();
 		cfg
 			.include("../libopus")
 			.include("../libopus/include")
