@@ -266,14 +266,12 @@ The bits must have been encoded with ec_enc_uint().
 No call to ec_dec_update() is necessary after this call.
 
 * `ft`: The number of integers that can be decoded (one more than the max).
-	This must be at least one, and no more than `2**32-1`.
+	This must be at least 2, and no more than `2**32-1`.
 
 Return: The decoded bits.
 */
 pub extern fn ec_dec_uint(this :&mut ec_dec, mut ft :u32) -> u32 {
 	// In order to optimize EC_ILOG(), it is undefined for the value 0.
-	// TODO is this ^v still relevant?? If yes, the requirements
-	// for ft need to be updated.
 	assert!(ft > 1);
 	ft -= 1;
 	let mut ftb = ilog(ft);

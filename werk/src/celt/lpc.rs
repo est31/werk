@@ -61,6 +61,8 @@ pub extern fn celt_fir_c(x :* const v16, num :* const v16, y :* mut v16,
 	let ord = ord as usize;
 	let n = n as usize;
 
+	assert_ne!(x, y);
+
 	let num = unsafe {
 		slice::from_raw_parts(num, ord)
 	};
