@@ -48,16 +48,16 @@ files_fn! { opus_files_float;
 files_fn! { celt_files;
 	celt/bands.c,
 	celt/celt.c,
-	celt/celt_encoder.c,
+	celt/celt_encoder.c, // encoder -- not a priority ATM
 	celt/celt_decoder.c,
 	celt/cwrs.c,
 	// celt/entcode.c, -- SMALL_DIV_TABLE still missing
 	// celt/entdec.c,
-	celt/entenc.c,
-	celt/kiss_fft.c,
+	celt/entenc.c, // encoder -- not a priority ATM
+	celt/kiss_fft.c, // before porting check whether crates on crates.io can do this
 	// celt/laplace.c,
 	// celt/mathops.c, -- fixed point stuff still missing
-	celt/mdct.c,
+	celt/mdct.c, // before porting check whether crates on crates.io can do this
 	celt/modes.c,
 	// celt/pitch.c,
 	// celt/celt_lpc.c,
