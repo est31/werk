@@ -32,10 +32,11 @@ script:
   - cargo clean
   # - cargo clippy --verbose
   - cargo build --verbose
-  - cargo test --verbose
+  # - cargo test --verbose
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    cd werk
     cargo tarpaulin --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
