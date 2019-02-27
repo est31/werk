@@ -32,7 +32,7 @@ script:
   - cargo clean
   # - cargo clippy --verbose
   - cargo build --verbose
-  # - cargo test --verbose
+  - cargo test -p werk --verbose
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
