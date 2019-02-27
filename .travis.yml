@@ -1,0 +1,41 @@
+language: rust
+
+sudo: required
+dist: trusty
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+addons:
+  apt:
+    packages:
+      - libssl-dev
+
+cache: cargo
+
+install: |
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    cargo tarpaulin --version || cargo install cargo-tarpaulin
+  fi
+
+# before_script:
+#   - rustup component add clippy
+
+script:
+  - cargo clean
+  # - cargo clippy --verbose
+  - cargo build --verbose
+  - cargo test --verbose
+
+after_success: |
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    cargo tarpaulin --out Xml
+    bash <(curl -s https://codecov.io/bash)
+  fi
