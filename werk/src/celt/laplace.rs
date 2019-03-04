@@ -7,26 +7,25 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-use std::os::raw::*;
 use super::entcode::*;
-use super::entdec::{ec_decode_bin, ec_dec_update};
+use super::entdec::{ec_dec_update, ec_decode_bin};
 use std::cmp;
+use std::os::raw::*;
 
 /// The minimum probability of an energy delta (out of 32768).
-const LAPLACE_LOG_MINP :u32 = 0;
-const LAPLACE_MINP :u32 = 1 << LAPLACE_LOG_MINP;
+const LAPLACE_LOG_MINP: u32 = 0;
+const LAPLACE_MINP: u32 = 1 << LAPLACE_LOG_MINP;
 /// The minimum number of guaranteed representable energy deltas (in one
 /// direction).
-const LAPLACE_NMIN :u32 = 16;
-
+const LAPLACE_NMIN: u32 = 16;
 
 // TODO one day create a laplace ctx struct that contains fs and decay,
 // and convert the three functions in this file to functions over that ctx.
 
 // When called, decay is positive and at most 11456.
-fn laplace_get_freq1(fs0 :c_uint, decay :c_int) -> c_uint {
+fn laplace_get_freq1(fs0: c_uint, decay: c_int) -> c_uint {
 	let ft = 32768 - LAPLACE_MINP * (2 * LAPLACE_NMIN) - fs0;
-	ft * ((16384 - decay) as u32) >> 15
+	(ft * ((16384 - decay) as u32)) >> 15
 }
 
 #[no_mangle]
@@ -37,10 +36,14 @@ fn laplace_get_freq1(fs0 :c_uint, decay :c_int) -> c_uint {
 /// * `value` - Value to encode
 /// * `fs` - Probability of 0, multiplied by 32768
 /// * `decay` - Probability of the value +/- 1, multiplied by 16384
-pub extern fn ec_laplace_encode(enc :&mut ec_ctx,
-		value :&mut c_int, mut fs :c_uint, decay :c_int) {
-	let mut fl :c_uint = 0;
-	let mut val :c_int = *value;
+pub extern "C" fn ec_laplace_encode(
+	enc: &mut ec_ctx,
+	value: &mut c_int,
+	mut fs: c_uint,
+	decay: c_int,
+) {
+	let mut fl: c_uint = 0;
+	let mut val: c_int = *value;
 	if val != 0 {
 		let s = -((val < 0) as c_int);
 		val = (val + s) ^ s;
@@ -48,7 +51,7 @@ pub extern fn ec_laplace_encode(enc :&mut ec_ctx,
 		fs = laplace_get_freq1(fs, decay);
 		// Search the decaying part of the PDF.
 		let mut last_i = 0;
-		for i in 1 .. val {
+		for i in 1..val {
 			last_i = i;
 			if fs == 0 {
 				break;
@@ -59,8 +62,7 @@ pub extern fn ec_laplace_encode(enc :&mut ec_ctx,
 		}
 		// Everything beyond that has probability LAPLACE_MINP
 		if fs == 0 {
-			let mut ndi_max = (32768 - fl + LAPLACE_MINP - 1)
-				>> LAPLACE_LOG_MINP;
+			let mut ndi_max = (32768 - fl + LAPLACE_MINP - 1) >> LAPLACE_LOG_MINP;
 			ndi_max = (ndi_max - s as c_uint) >> 1;
 			let di = cmp::min(val - last_i, ndi_max as i32 - 1);
 			fl += (2 * di + 1 + s) as u32 * LAPLACE_MINP;
@@ -77,8 +79,7 @@ pub extern fn ec_laplace_encode(enc :&mut ec_ctx,
 }
 
 extern "C" {
-	fn ec_encode_bin(this: &mut ec_ctx, fl :c_uint,
-		fh :c_uint, bits :c_uint);
+	fn ec_encode_bin(this: &mut ec_ctx, fl: c_uint, fh: c_uint, bits: c_uint);
 }
 
 #[no_mangle]
@@ -88,11 +89,10 @@ extern "C" {
 /// * `dec` - Entropy decoder state
 /// * `fs` - Probability of 0, multiplied by 32768
 /// * `decay` - Probability of the value +/- 1, multiplied by 16384
-pub extern fn ec_laplace_decode(dec :&mut ec_ctx,
-		mut fs :c_uint, decay :c_int) -> c_int {
-	let mut val :c_int = 0;
-	let mut fl :c_uint = 0;
-	let fm :c_uint = ec_decode_bin(dec, 15);
+pub extern "C" fn ec_laplace_decode(dec: &mut ec_ctx, mut fs: c_uint, decay: c_int) -> c_int {
+	let mut val: c_int = 0;
+	let mut fl: c_uint = 0;
+	let fm: c_uint = ec_decode_bin(dec, 15);
 	if fm >= fs {
 		val += 1;
 		fl = fs;

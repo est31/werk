@@ -7,19 +7,17 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
+use super::arch::{celt_norm, v16, v32, EPSILON};
+use super::cwrs::{decode_pulses, encode_pulses};
+use super::entcode::{celt_udiv, ec_ctx};
+use super::mathops::fast_atan2;
+use super::pitch::inner_prod_rs;
 use std::os::raw::*;
 use std::slice;
-use super::arch::{EPSILON, v16, v32, celt_norm};
-use super::mathops::fast_atan2;
-use super::entcode::{ec_ctx, celt_udiv};
-use super::cwrs::{encode_pulses, decode_pulses};
-use super::pitch::inner_prod_rs;
 
 use super::bands::SPREAD_NONE;
 
-unsafe fn exp_rotation_1(x :* mut celt_norm, off :usize,
-	len :usize, stride :usize, c :v16, s :v16) {
-
+unsafe fn exp_rotation_1(x: *mut celt_norm, off: usize, len: usize, stride: usize, c: v16, s: v16) {
 	let ms = neg16!(s);
 	let off = off as isize;
 	let stride = stride as isize;
@@ -31,7 +29,7 @@ unsafe fn exp_rotation_1(x :* mut celt_norm, off :usize,
 			extract16!(pshr32!(mac16_16!(mult16_16!(c, $a), $s, $b), 15))
 		};
 	}
-	for _ in 0 .. len - stride {
+	for _ in 0..len - stride {
 		let x1 = *xptr;
 		let x2 = *xptr.offset(stride);
 		*xptr.offset(stride) = epmm!(x2, x1, s);
@@ -43,7 +41,7 @@ unsafe fn exp_rotation_1(x :* mut celt_norm, off :usize,
 	// We'd have to change it somewhere higher up in the chain.
 	// Maybe it would work if we changed it in celt/bands.c...
 	xptr = x.offset(off + len - 2 * stride - 1);
-	for _ in 0 .. len- 2 * stride {
+	for _ in 0..len - 2 * stride {
 		let x1 = *xptr;
 		let x2 = *xptr.offset(stride);
 		*xptr.offset(stride) = epmm!(x2, x1, s);
@@ -53,15 +51,23 @@ unsafe fn exp_rotation_1(x :* mut celt_norm, off :usize,
 }
 
 #[no_mangle]
-pub extern fn exp_rotation(x :* mut celt_norm, len :c_int, dir :c_int,
-		stride :c_int, k :c_int, spread :c_int) {
-	const SPREAD_FACTOR :[c_int; 3] = [15, 10, 5];
+pub extern "C" fn exp_rotation(
+	x: *mut celt_norm,
+	len: c_int,
+	dir: c_int,
+	stride: c_int,
+	k: c_int,
+	spread: c_int,
+) {
+	const SPREAD_FACTOR: [c_int; 3] = [15, 10, 5];
 	if 2 * k >= len || spread == SPREAD_NONE {
 		return;
 	}
 	let factor = SPREAD_FACTOR[spread as usize - 1];
-	let gain = div!(mult16_16!(1.0, len as v16) as v32,
-		(len + factor * k) as v32);
+	let gain = div!(
+		mult16_16!(1.0, len as v16) as v32,
+		(len + factor * k) as v32
+	);
 	let theta = half16!(mul16_16_q15!(gain, gain));
 	let c = cos_norm!(extend32!(theta));
 	let s = cos_norm!(extend32!(sub16!(1.0, theta))); // sin(theta)
@@ -80,7 +86,7 @@ pub extern fn exp_rotation(x :* mut celt_norm, len :c_int, dir :c_int,
 	// NOTE: As a minor optimization, we could be passing around log2(B),
 	// not B, for both this and for extract_collapse_mask()
 	let len = celt_udiv(len as c_uint, stride as c_uint) as usize;
-	for i in 0 .. stride as usize {
+	for i in 0..stride as usize {
 		unsafe {
 			if dir < 0 {
 				if stride2 > 0 {
@@ -98,19 +104,20 @@ pub extern fn exp_rotation(x :* mut celt_norm, len :c_int, dir :c_int,
 }
 
 #[no_mangle]
-pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
-		k :c_int, ni :c_int, _arch :c_int) -> v16 {
+pub extern "C" fn op_pvq_search_c(
+	x: *mut celt_norm,
+	iy: *mut c_int,
+	k: c_int,
+	ni: c_int,
+	_arch: c_int,
+) -> v16 {
 	let n = ni as usize;
-	let x = unsafe {
-		slice::from_raw_parts_mut(x, n)
-	};
-	let iy = unsafe {
-		slice::from_raw_parts_mut(iy, n)
-	};
+	let x = unsafe { slice::from_raw_parts_mut(x, n) };
+	let iy = unsafe { slice::from_raw_parts_mut(iy, n) };
 	let mut y = Vec::with_capacity(n);
 	// Get rid of the sign
 	let mut signx = Vec::with_capacity(n);
-	for j in 0 .. n {
+	for j in 0..n {
 		signx.push(x[j] < 0.0);
 		// OPT: Make sure the compiler doesn't use a branch on abs16!()
 		x[j] = abs16!(x[j]);
@@ -127,14 +134,14 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 		// to be allocated. 64 is an approximation of infinity here.
 		if !(sum > EPSILON && sum < 64.0) {
 			x[0] = qconst16!(1.0, 14);
-			for j in 1 .. n {
+			for j in 1..n {
 				x[j] = 0.0;
 			}
 			sum = qconst16!(1.0, 14);
 		}
 		// Using K+e with e < 1 guarantees we cannot get more than K pulses.
 		let rcp = extract16!(mul16_32_q16!(k as v16 + 0.8, rcp!(sum)));
-		for j in 0 .. n {
+		for j in 0..n {
 			iy[j] = (rcp * x[j]).floor() as c_int;
 			y[j] = iy[j] as celt_norm;
 			yy = mac16_16!(yy, y[j], y[j]);
@@ -143,7 +150,10 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 			pulses_left -= iy[j];
 		}
 	}
-	assert!(pulses_left >= 0, "Allocated too many pulses in the quick pass");
+	assert!(
+		pulses_left >= 0,
+		"Allocated too many pulses in the quick pass"
+	);
 	// This should never happen, but in case it does (e.g. on silence)
 	// we fill the first bin with pulses.
 	if pulses_left > ni + 3 {
@@ -153,10 +163,10 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 		iy[0] += pulses_left;
 		pulses_left = 0;
 	}
-	for _ in 0 .. pulses_left {
+	for _ in 0..pulses_left {
 		// The squared magnitude term gets added anyway, so we might as well
 		// add it outside the loop
-		yy = add16!(yy, 1.0);
+		yy += 1.0;
 
 		// Calculations for position 0 are out of the loop, in part to
 		// reduce mispredicted branches (since the if condition is usually
@@ -171,7 +181,7 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 		let mut best_id = 0;
 		let mut best_den = ryy;
 		let mut best_num = rxy;
-		for j in 1 .. n {
+		for j in 1..n {
 			// Temporary sums of the new pulse(s)
 			rxy = extract16!(shr32!(add32!(xy, extend32!(x[j])), rshift));
 			// We're multiplying y[j] by two so we don't have to do it here
@@ -193,9 +203,9 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 			}
 		}
 		// Updating the sums of the new pulse(s)
-		xy = add32!(xy, extend32!(x[best_id]));
+		xy += x[best_id];
 		// We're multiplying y[j] by two so we don't have to do it here
-		yy = add16!(yy, y[best_id]);
+		yy += y[best_id];
 
 		// Only now that we've made the final choice, update y/iy
 		// Multiplying y[j] by 2 so we don't have to do it everywhere else
@@ -203,7 +213,7 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 		iy[best_id] += 1;
 	}
 	// Put the original sign back
-	for j in 0 .. n {
+	for j in 0..n {
 		iy[j] = if signx[j] { -iy[j] } else { iy[j] };
 	}
 	yy
@@ -212,28 +222,25 @@ pub extern fn op_pvq_search_c(x :* mut celt_norm, iy :* mut c_int,
 /// Takes the pitch vector and the decoded residual vector,
 /// computes the gain that will give ||p+g*y|| = 1 and mixes
 /// the residual with the pitch.
-fn normalize_residual(iy :&[c_int], x :* mut celt_norm, n :usize,
-		ryy :v32, gain :v16) {
+fn normalize_residual(iy: &[c_int], x: *mut celt_norm, n: usize, ryy: v32, gain: v16) {
 	let t = vshr32!(ryy, 2 * (k - 7));
 	let g = mul16_16_p15!(rsqrt_norm!(t), gain);
-	let x = unsafe {
-		slice::from_raw_parts_mut(x, n)
-	};
+	let x = unsafe { slice::from_raw_parts_mut(x, n) };
 
-	for i in 0 .. n {
+	for i in 0..n {
 		x[i] = extract16!(pshr32!(mult16_16!(g, iy[i]), k + 1));
 	}
 }
 
-fn extract_collapse_mask(iy :&[c_int], n :usize, b :usize) -> c_uint {
+fn extract_collapse_mask(iy: &[c_int], n: usize, b: usize) -> c_uint {
 	if b <= 1 {
 		return 1;
 	}
 	let mut collapse_mask = 0;
 	let n0 = celt_udiv(n as c_uint, b as c_uint) as usize;
-	for i in 0 .. b {
+	for i in 0..b {
 		let mut tmp = 0;
-		for j in 0 .. n0 {
+		for j in 0..n0 {
 			tmp |= iy[i * n0 + j];
 		}
 		collapse_mask |= ((tmp != 0) as c_uint) << i;
@@ -254,8 +261,17 @@ to 1. This is the function that will typically require the most CPU.
 
 Returns a mask indicating which blocks in the band received pulses.
 */
-pub extern fn alg_quant(x :* mut celt_norm, n :c_int, k :c_int, spread :c_int, b :c_int,
-		enc :&mut ec_ctx, gain :v16, resynth :c_int, arch :c_int) -> c_uint {
+pub extern "C" fn alg_quant(
+	x: *mut celt_norm,
+	n: c_int,
+	k: c_int,
+	spread: c_int,
+	b: c_int,
+	enc: &mut ec_ctx,
+	gain: v16,
+	resynth: c_int,
+	arch: c_int,
+) -> c_uint {
 	assert!(k > 0, "at least one pulse required");
 	assert!(n > 1, "at least one dimensions required");
 
@@ -289,27 +305,29 @@ Algebraic pulse decoder.
 
 Returns a mask indicating which blocks in the band received pulses.
 */
-pub extern fn alg_unquant(x :* mut celt_norm, n :c_int, k :c_int,
-		spread :c_int, b :c_int, dec :&mut ec_ctx, gain :v16) -> c_uint {
+pub extern "C" fn alg_unquant(
+	x: *mut celt_norm,
+	n: c_int,
+	k: c_int,
+	spread: c_int,
+	b: c_int,
+	dec: &mut ec_ctx,
+	gain: v16,
+) -> c_uint {
 	assert!(k > 0, "at least one pulse required");
 	assert!(n > 1, "at least two dimensions required");
 
 	let mut iy = vec![0; n as usize];
-	let ryy = unsafe {
-		decode_pulses(iy.as_mut_ptr(), n, k, dec)
-	};
+	let ryy = unsafe { decode_pulses(iy.as_mut_ptr(), n, k, dec) };
 	normalize_residual(&mut iy, x, n as usize, ryy, gain);
 	exp_rotation(x, n, -1, b, k, spread);
 	extract_collapse_mask(&iy, n as usize, b as usize)
 }
 
 #[no_mangle]
-pub extern fn renormalise_vector(x :* mut celt_norm, n :c_int,
-		gain :v16, _arch :c_int) {
+pub extern "C" fn renormalise_vector(x: *mut celt_norm, n: c_int, gain: v16, _arch: c_int) {
 	let n = n as usize;
-	let x = unsafe {
-		slice::from_raw_parts_mut(x, n)
-	};
+	let x = unsafe { slice::from_raw_parts_mut(x, n) };
 	let e = EPSILON + inner_prod_rs(x, x);
 	let t = vshr32!(e, 2 * (k - 7));
 	let g = mul16_16_p15!(rsqrt_norm!(t), gain);
@@ -319,15 +337,16 @@ pub extern fn renormalise_vector(x :* mut celt_norm, n :c_int,
 }
 
 #[no_mangle]
-pub extern fn stereo_itheta(x :* const celt_norm, y :* const celt_norm,
-		stereo :c_int, n :c_int, _arch :c_int) -> c_int {
+pub extern "C" fn stereo_itheta(
+	x: *const celt_norm,
+	y: *const celt_norm,
+	stereo: c_int,
+	n: c_int,
+	_arch: c_int,
+) -> c_int {
 	let n = n as usize;
-	let x = unsafe {
-		slice::from_raw_parts(x, n)
-	};
-	let y = unsafe {
-		slice::from_raw_parts(y, n)
-	};
+	let x = unsafe { slice::from_raw_parts(x, n) };
+	let y = unsafe { slice::from_raw_parts(y, n) };
 
 	let mut emid = EPSILON;
 	let mut eside = EPSILON;

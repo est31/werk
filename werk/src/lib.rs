@@ -13,6 +13,6 @@ extern crate werk_sys;
 pub mod celt;
 
 /// Workaround for https://github.com/rust-lang/rust/issues/18807
-pub extern fn so_dead() {
-	println!("");
+pub extern "C" fn so_dead() {
+	println!();
 }

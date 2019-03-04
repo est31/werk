@@ -7,13 +7,13 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-extern crate gcc;
+extern crate cc;
 extern crate bindgen;
 
 use std::env;
 use std::path::PathBuf;
 
-use gcc::Build;
+use cc::Build;
 
 macro_rules! files_fn {
 	($name:ident; $($($pathseg:ident)/ *.c),*,) => {
@@ -178,7 +178,7 @@ files_fn! { silk_files_float;
 }
 
 fn compile_opus() {
-	let mut cfg = gcc::Build::new();
+	let mut cfg = cc::Build::new();
 	cfg
 		.include("../libopus/include")
 		.include("../libopus/celt")

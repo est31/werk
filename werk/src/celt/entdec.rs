@@ -67,10 +67,10 @@ ec_tell() can be used to determine how many bits were needed to decode
 }
 */
 
-use std::os::raw::*;
 use super::entcode::*;
 use super::mathops::ilog;
 use std::cmp;
+use std::os::raw::*;
 use std::ptr;
 
 pub type ec_dec = ec_ctx;
@@ -102,19 +102,19 @@ impl ec_dec {
 			// Use up the remaining bits from our last symbol.
 			let mut sym = self.rem;
 			// Read the next value from the input.
-			self.rem = self.read_byte() as i32;
+			self.rem = i32::from(self.read_byte());
 			// Take the rest of the bits we need from this new symbol.
 			sym = (sym << EC_SYM_BITS | self.rem) >> (EC_SYM_BITS - EC_CODE_EXTRA);
 			// And subtract them from val, capped to be less than EC_CODE_TOP.
-			self.val = ((self.val << EC_SYM_BITS) +
-				(EC_SYM_MAX as u32 &!(sym as u32))) & (EC_CODE_TOP - 1);
+			self.val = ((self.val << EC_SYM_BITS) + (EC_SYM_MAX as u32 & !(sym as u32)))
+				& (EC_CODE_TOP - 1);
 		}
 	}
 }
 
 #[no_mangle]
 /// Initializes the decoder.
-pub extern fn ec_dec_init(this :&mut ec_dec, buf :*mut c_uchar, storage :u32) {
+pub extern "C" fn ec_dec_init(this: &mut ec_dec, buf: *mut c_uchar, storage: u32) {
 	this.buf = buf;
 	this.storage = storage;
 	this.end_offs = 0;
@@ -124,13 +124,12 @@ pub extern fn ec_dec_init(this :&mut ec_dec, buf :*mut c_uchar, storage :u32) {
 	// The final value after the ec_dec_normalize() call will be the same as in
 	// the encoder, but we have to compensate for the bits that are added
 	// there.
-	this.nbits_total = EC_CODE_BITS + 1 -
-		((EC_CODE_BITS - EC_CODE_EXTRA) / EC_SYM_BITS) * EC_SYM_BITS;
+	this.nbits_total =
+		EC_CODE_BITS + 1 - ((EC_CODE_BITS - EC_CODE_EXTRA) / EC_SYM_BITS) * EC_SYM_BITS;
 	this.offs = 0;
 	this.rng = 1 << EC_CODE_EXTRA;
-	this.rem = this.read_byte() as i32;
-	this.val = this.rng - 1 -
-		(this.rem as u32 >> (EC_SYM_BITS - EC_CODE_EXTRA));
+	this.rem = i32::from(this.read_byte());
+	this.val = this.rng - 1 - (this.rem as u32 >> (EC_SYM_BITS - EC_CODE_EXTRA));
 	this.error = 0;
 	// Normalize the interval
 	this.dec_normalize();
@@ -155,7 +154,7 @@ Return: A cumulative frequency representing the encoded symbol.
 	up to and including the one encoded is fh, then the returned value
 	will fall in the range [fl,fh).
 */
-pub extern fn ec_decode(this :&mut ec_dec, ft :c_uint) -> c_uint {
+pub extern "C" fn ec_decode(this: &mut ec_dec, ft: c_uint) -> c_uint {
 	this.ext = celt_udiv(this.rng, ft);
 	let s = this.val / this.ext;
 	// libopus uses a macro called "EC_MINI" here,
@@ -167,7 +166,7 @@ pub extern fn ec_decode(this :&mut ec_dec, ft :c_uint) -> c_uint {
 
 #[no_mangle]
 /// Equivalent to ec_decode() with `ft==1<<bits`.
-pub extern fn ec_decode_bin(this :&mut ec_dec, bits :c_uint) -> c_uint {
+pub extern "C" fn ec_decode_bin(this: &mut ec_dec, bits: c_uint) -> c_uint {
 	this.ext = this.rng >> bits;
 	let s = this.val / this.ext;
 	(1 << bits) - cmp::min(s + 1, 1 << bits)
@@ -190,21 +189,20 @@ intermediate calculations are performed.
 	was encoded in. This must be the same as passed to the preceding call
 	to ec_decode().
 */
-pub extern fn ec_dec_update(this :&mut ec_dec, fl :c_uint, fh :c_uint,
-		ft :c_uint) {
+pub extern "C" fn ec_dec_update(this: &mut ec_dec, fl: c_uint, fh: c_uint, ft: c_uint) {
 	let s = this.ext * (ft - fh);
 	this.val -= s;
 	this.rng = if fl > 0 {
-			this.ext * (fh - fl)
-		} else {
-			this.rng - s
-		};
+		this.ext * (fh - fl)
+	} else {
+		this.rng - s
+	};
 	this.dec_normalize();
 }
 
 #[no_mangle]
 /// Decode a bit that has a 1/(1<<_logp) probability of being a one.
-pub extern fn ec_dec_bit_logp(this :&mut ec_dec, logp :c_uint) -> c_int {
+pub extern "C" fn ec_dec_bit_logp(this: &mut ec_dec, logp: c_uint) -> c_int {
 	let r = this.rng;
 	let d = this.val;
 	let s = r >> logp;
@@ -212,11 +210,7 @@ pub extern fn ec_dec_bit_logp(this :&mut ec_dec, logp :c_uint) -> c_int {
 	if !ret {
 		this.val = d - s;
 	}
-	this.rng = if ret {
-			s
-		} else {
-			r - s
-		};
+	this.rng = if ret { s } else { r - s };
 	this.dec_normalize();
 	ret as c_int
 }
@@ -235,18 +229,17 @@ No call to ec_dec_update() is necessary after this call.
 
 Return: The decoded symbol `s`.
 */
-pub extern fn ec_dec_icdf(this :&mut ec_dec, icdf :* const u8,
-		ftb :c_uint) -> c_int {
+pub extern "C" fn ec_dec_icdf(this: &mut ec_dec, icdf: *const u8, ftb: c_uint) -> c_int {
 	let mut s = this.rng;
 	let d = this.val;
 	let r = s >> ftb;
-	let mut ret = - 1;
+	let mut ret = -1;
 	let mut t;
 	loop {
 		t = s;
 		ret += 1;
 		unsafe {
-			s = r * ptr::read(icdf.offset(ret as isize)) as u32;
+			s = r * u32::from(ptr::read(icdf.offset(ret as isize)));
 		}
 		if d >= s {
 			break;
@@ -270,7 +263,7 @@ No call to ec_dec_update() is necessary after this call.
 
 Return: The decoded bits.
 */
-pub extern fn ec_dec_uint(this :&mut ec_dec, mut ft :u32) -> u32 {
+pub extern "C" fn ec_dec_uint(this: &mut ec_dec, mut ft: u32) -> u32 {
 	// In order to optimize EC_ILOG(), it is undefined for the value 0.
 	assert!(ft > 1);
 	ft -= 1;
@@ -307,12 +300,12 @@ No call to `ec_dec_update()` is necessary after this call.
 
 Return: The decoded bits.
 */
-pub extern fn ec_dec_bits(this :&mut ec_dec, bits :c_uint) -> u32 {
+pub extern "C" fn ec_dec_bits(this: &mut ec_dec, bits: c_uint) -> u32 {
 	let mut window = this.end_window;
 	let mut available = this.nend_bits;
 	if (available as c_uint) < bits {
 		loop {
-			window |= (this.read_byte_from_end() as ec_window) << available;
+			window |= u32::from(this.read_byte_from_end()) << available;
 			available += EC_SYM_BITS;
 			if available > (EC_WINDOW_SIZE as i32) - EC_SYM_BITS {
 				break;
