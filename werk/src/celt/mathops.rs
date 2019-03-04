@@ -23,7 +23,7 @@ intrinsics as well :)
 */
 
 /// Unsigned ilog function (Section 1.1.10.)
-pub fn ilog(u :u32) -> u32 {
+pub fn ilog(u: u32) -> u32 {
 	32 - u.leading_zeros()
 }
 
@@ -41,15 +41,15 @@ fn test_ilog() {
 #[no_mangle]
 /// Compute floor(sqrt(_val)) with exact arithmetic.
 pub extern "C" fn isqrt32(mut val: u32) -> c_uint {
-	let mut bshift :c_int = (ilog(val) as c_int - 1) >> 1;
-	let mut b :c_uint = 1 << bshift;
-	let mut g :c_uint = 0;
+	let mut bshift: c_int = (ilog(val) as c_int - 1) >> 1;
+	let mut b: c_uint = 1 << bshift;
+	let mut g: c_uint = 0;
 	// Uses the second method from
 	// http://www.azillionmonkeys.com/qed/sqroot.html
 	// The main idea is to search for the largest binary digit b such that
 	// (g+b)*(g+b) <= _val, and add it to the solution g.
 	loop {
-		let t :u32 = (((g as u32) << 1) + b) << bshift;
+		let t: u32 = (((g as u32) << 1) + b) << bshift;
 		if t <= val {
 			g += b;
 			val -= t;
@@ -74,12 +74,11 @@ fn test_isqrt32() {
 }
 
 #[inline]
-pub fn fast_atan2(y :f32, x :f32) -> f32 {
-
-	const CA :f32 = 0.43157974;
-	const CB :f32 = 0.67848403;
-	const CC :f32 = 0.08595542;
-	const TAU :f32 = ::std::f32::consts::PI / 2.0;
+pub fn fast_atan2(y: f32, x: f32) -> f32 {
+	const CA: f32 = 0.431_579_74;
+	const CB: f32 = 0.678_484;
+	const CC: f32 = 0.085_955_42;
+	const TAU: f32 = ::std::f32::consts::PI / 2.0;
 
 	macro_rules! signed_tau {
 		($x:expr) => {
@@ -87,8 +86,8 @@ pub fn fast_atan2(y :f32, x :f32) -> f32 {
 				-TAU
 			} else {
 				TAU
-			}
-		}
+				}
+		};
 	}
 
 	let x2 = x * x;

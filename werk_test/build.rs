@@ -7,9 +7,9 @@
 // Please see the COPYING file attached to
 // this source distribution for details.
 
-extern crate gcc;
+extern crate cc;
 
-use gcc::Build;
+use cc::Build;
 
 macro_rules! program {
 	($($($pathseg:ident)/ *.c),*; $libname:expr) => {{

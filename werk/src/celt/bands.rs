@@ -10,4 +10,4 @@
 // Only contains some stuff from the header -- for now.
 
 use std::os::raw::*;
-pub const SPREAD_NONE :c_int = 0;
+pub const SPREAD_NONE: c_int = 0;
