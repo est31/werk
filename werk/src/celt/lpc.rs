@@ -15,10 +15,10 @@ use std::os::raw::*;
 use std::slice;
 
 #[no_mangle]
-pub extern "C" fn _celt_lpc(lpc: *mut v16, ac: *const v32, p: c_int) {
+pub unsafe extern "C" fn _celt_lpc(lpc: *mut v16, ac: *const v32, p: c_int) {
 	let p = p as usize;
-	let lpc = unsafe { slice::from_raw_parts_mut(lpc, p) };
-	let ac = unsafe { slice::from_raw_parts(ac, p + 1) };
+	let lpc = slice::from_raw_parts_mut(lpc, p);
+	let ac = slice::from_raw_parts(ac, p + 1);
 	let mut error = ac[0];
 	slice_clear!(lpc);
 	if ac[0] != 0.0 {
@@ -52,7 +52,7 @@ pub extern "C" fn _celt_lpc(lpc: *mut v16, ac: *const v32, p: c_int) {
 }
 
 #[no_mangle]
-pub extern "C" fn celt_fir_c(
+pub unsafe extern "C" fn celt_fir_c(
 	x: *const v16,
 	num: *const v16,
 	y: *mut v16,
@@ -65,8 +65,8 @@ pub extern "C" fn celt_fir_c(
 
 	assert_ne!(x, y);
 
-	let num = unsafe { slice::from_raw_parts(num, ord) };
-	let y = unsafe { slice::from_raw_parts_mut(y, n) };
+	let num = slice::from_raw_parts(num, ord);
+	let y = slice::from_raw_parts_mut(y, n);
 
 	let mut rnum = Vec::with_capacity(ord);
 	for i in 0..ord {
@@ -80,33 +80,30 @@ pub extern "C" fn celt_fir_c(
 	for i4 in 0..(n - 3) / 4 {
 		let i = i4 << 2;
 		let mut sum = {
-			let x = unsafe { slice::from_raw_parts(x, n) };
+			let x = slice::from_raw_parts(x, n);
 			[sle!(x[i]), sle!(x[i + 1]), sle!(x[i + 2]), sle!(x[i + 3])]
 		};
 		// The x.offset below can be negative, therefore overflow.
 		// Due to this, we can't convert x to a slice, not without
 		// passing x - ord to this fn instead of x.
-		unsafe {
-			xcorr_kernel_rs(&rnum, x.add(i - ord), &mut sum, ord, arch);
-		}
+		xcorr_kernel_rs(&rnum, x.add(i - ord), &mut sum, ord, arch);
+
 		y[i] = round16!(sum[0], SIG_SHIFT);
 		y[i + 1] = round16!(sum[1], SIG_SHIFT);
 		y[i + 2] = round16!(sum[2], SIG_SHIFT);
 		y[i + 3] = round16!(sum[3], SIG_SHIFT);
 	}
 	for i in 4 * ((n - 3) / 4)..n {
-		unsafe {
-			let mut sum = sle!(*x.add(i));
-			for j in 0..ord {
-				sum = mac16_16!(sum, rnum[j], *x.offset((i + j - ord) as isize));
-			}
-			y[i] = round16!(sum, SIG_SHIFT);
+		let mut sum = sle!(*x.add(i));
+		for j in 0..ord {
+			sum = mac16_16!(sum, rnum[j], *x.add(i + j - ord));
 		}
+		y[i] = round16!(sum, SIG_SHIFT);
 	}
 }
 
 #[no_mangle]
-pub extern "C" fn celt_iir(
+pub unsafe extern "C" fn celt_iir(
 	x: *const v32,
 	den: *const v16,
 	yp: *mut v16,
@@ -126,10 +123,10 @@ pub extern "C" fn celt_iir(
 	// bounds checks in the loop below.
 	assert!(ord >= 3);
 
-	let x = unsafe { slice::from_raw_parts(x, n) };
-	let den = unsafe { slice::from_raw_parts(den, ord) };
-	let yp = unsafe { slice::from_raw_parts_mut(yp, n) };
-	let mem = unsafe { slice::from_raw_parts_mut(mem, ord) };
+	let x = slice::from_raw_parts(x, n);
+	let den = slice::from_raw_parts(den, ord);
+	let yp = slice::from_raw_parts_mut(yp, n);
+	let mem = slice::from_raw_parts_mut(mem, ord);
 	let mut rden = Vec::with_capacity(ord);
 	let mut y = Vec::with_capacity(ord + n);
 	for i in 0..ord {
@@ -145,9 +142,8 @@ pub extern "C" fn celt_iir(
 		let i = i4 << 2;
 		// Unroll by 4 as if it were an FIR filter
 		let mut sum = [x[i], x[i + 1], x[i + 2], x[i + 3]];
-		unsafe {
-			xcorr_kernel_rs(&rden, y.as_ptr().add(i), &mut sum, ord, arch);
-		}
+		xcorr_kernel_rs(&rden, y.as_ptr().add(i), &mut sum, ord, arch);
+
 		// Patch up the result to compensate for the fact that this is an IIR
 		y[i + ord] = -sround16!(sum[0], SIG_SHIFT);
 		yp[i] = sum[0];
@@ -181,7 +177,7 @@ pub extern "C" fn celt_iir(
 }
 
 #[no_mangle]
-pub extern "C" fn _celt_autocorr(
+pub unsafe extern "C" fn _celt_autocorr(
 	x: *const v16,
 	ac: *mut v16,
 	window: *const v16,
@@ -195,8 +191,8 @@ pub extern "C" fn _celt_autocorr(
 	let overlap = overlap as usize;
 	let n = n as usize;
 
-	let x = unsafe { slice::from_raw_parts(x, n) };
-	let window = unsafe { slice::from_raw_parts(window, overlap) };
+	let x = slice::from_raw_parts(x, n);
+	let window = slice::from_raw_parts(window, overlap);
 
 	let mut xx = Vec::with_capacity(n);
 	let xptr = if overlap == 0 {
@@ -211,7 +207,7 @@ pub extern "C" fn _celt_autocorr(
 	};
 	celt_pitch_xcorr_c(xptr.as_ptr(), xptr.as_ptr(), ac, fast_n, lag + 1, arch);
 	let lag = lag as usize;
-	let ac = unsafe { slice::from_raw_parts_mut(ac, lag) };
+	let ac = slice::from_raw_parts_mut(ac, lag);
 	for k in 0..lag {
 		let mut d = 0.0;
 		for i in k + (fast_n as usize)..n {

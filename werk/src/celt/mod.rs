@@ -30,4 +30,5 @@ pub mod laplace;
 pub mod lpc;
 pub mod mathops;
 pub mod pitch;
+pub mod quant_bands;
 pub mod vq;

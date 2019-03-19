@@ -84,7 +84,7 @@ fn celt_fir5(x: &mut [v16], num: &[v16]) {
 }
 
 #[no_mangle]
-pub extern "C" fn pitch_downsample(
+pub unsafe extern "C" fn pitch_downsample(
 	x: *mut *mut celt_sig,
 	x_lp: *mut v16,
 	len: c_int,
@@ -93,9 +93,9 @@ pub extern "C" fn pitch_downsample(
 ) {
 	let len = len as usize;
 	let len2 = len >> 1;
-	let mut x_lp = unsafe { slice::from_raw_parts_mut(x_lp, len2) };
-	let x_0 = unsafe { slice::from_raw_parts(*x, len) };
-	let x_1 = unsafe { slice::from_raw_parts(*(x.offset(1)), len) };
+	let mut x_lp = slice::from_raw_parts_mut(x_lp, len2);
+	let x_0 = slice::from_raw_parts(*x, len);
+	let x_1 = slice::from_raw_parts(*(x.offset(1)), len);
 	x_lp[0] = shr32!(half32!(half32!(x_0[1]) + x_0[0]), shift);
 	for i in 1..len2 {
 		x_lp[i] = shr32!(
@@ -133,6 +133,7 @@ pub extern "C" fn pitch_downsample(
 
 	let mut lpc = [0.0; 4];
 	_celt_lpc((&mut lpc).as_mut_ptr(), (&mut ac).as_mut_ptr(), 4);
+
 	let mut tmp = Q15ONE;
 	for i in 0..4 {
 		tmp *= 0.9;
@@ -151,7 +152,7 @@ pub extern "C" fn pitch_downsample(
 }
 
 #[no_mangle]
-pub extern "C" fn pitch_search(
+pub unsafe extern "C" fn pitch_search(
 	x_lp: *const v16,
 	y: *const v16,
 	len: c_int,
@@ -171,8 +172,8 @@ pub extern "C" fn pitch_search(
 
 	let max_pitch = max_pitch as usize;
 
-	let x_lp = unsafe { slice::from_raw_parts(x_lp, len2) };
-	let y = unsafe { slice::from_raw_parts(y, lag2) };
+	let x_lp = slice::from_raw_parts(x_lp, len2);
+	let y = slice::from_raw_parts(y, lag2);
 
 	let mut x_lp4 = Vec::with_capacity(len4);
 	let mut y_lp4 = Vec::with_capacity(lag4);
@@ -237,7 +238,7 @@ fn compute_pitch_gain(xy: v32, xx: v32, yy: v32) -> v16 {
 }
 
 #[no_mangle]
-pub extern "C" fn remove_doubling(
+pub unsafe extern "C" fn remove_doubling(
 	x: *const v16,
 	max_period: c_int,
 	min_period: c_int,
@@ -255,7 +256,7 @@ pub extern "C" fn remove_doubling(
 	*t0_ /= 2;
 	let n = (n / 2) as isize;
 
-	let xb = unsafe { slice::from_raw_parts(x, (n + max_period) as usize) };
+	let xb = slice::from_raw_parts(x, (n + max_period) as usize);
 
 	macro_rules! x {
 		($i:expr) => {
@@ -374,7 +375,7 @@ pub extern "C" fn remove_doubling(
 }
 
 #[no_mangle]
-pub extern "C" fn celt_pitch_xcorr_c(
+pub unsafe extern "C" fn celt_pitch_xcorr_c(
 	x: *const v16,
 	y: *const v16,
 	xcorr: *mut v32,
@@ -389,8 +390,8 @@ pub extern "C" fn celt_pitch_xcorr_c(
 	let len = len as usize;
 	let max_pitch = max_pitch as usize;
 
-	let xcorr = unsafe { slice::from_raw_parts_mut(xcorr, max_pitch) };
-	let x = unsafe { slice::from_raw_parts(x, len) };
+	let xcorr = slice::from_raw_parts_mut(xcorr, max_pitch);
+	let x = slice::from_raw_parts(x, len);
 
 	let mut i = 0;
 	loop {
@@ -398,7 +399,7 @@ pub extern "C" fn celt_pitch_xcorr_c(
 			break;
 		}
 		let mut sum = [0.0; 4];
-		let yoff = unsafe { y.add(i) };
+		let yoff = y.add(i);
 		xcorr_kernel_rs(x, yoff, &mut sum, len, arch);
 		xcorr[i] = sum[0];
 		xcorr[i + 1] = sum[1];
@@ -408,7 +409,7 @@ pub extern "C" fn celt_pitch_xcorr_c(
 	}
 	// In case max_pitch isn't a multiple of 4, do unrolled version
 	while i < max_pitch {
-		let yoff = unsafe { slice::from_raw_parts(y.add(i), len) };
+		let yoff = slice::from_raw_parts(y.add(i), len);
 		let sum = inner_prod_rs(x, yoff);
 		xcorr[i] = sum;
 		i += 1;
@@ -418,8 +419,14 @@ pub extern "C" fn celt_pitch_xcorr_c(
 // Some functions from pitch.h
 
 #[inline]
-pub fn xcorr_kernel_rs(x: &[v16], y: *const v16, sum: &mut [v32; 4], len: usize, _arch: c_int) {
-	let y = unsafe { slice::from_raw_parts(y, len + 3) };
+pub unsafe fn xcorr_kernel_rs(
+	x: &[v16],
+	y: *const v16,
+	sum: &mut [v32; 4],
+	len: usize,
+	_arch: c_int,
+) {
+	let y = slice::from_raw_parts(y, len + 3);
 	assert!(len >= 3);
 	let mut y0 = y[0];
 	let mut y1 = y[1];

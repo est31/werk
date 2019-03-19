@@ -12,6 +12,7 @@ use super::cwrs::{decode_pulses, encode_pulses};
 use super::entcode::{celt_udiv, ec_ctx};
 use super::mathops::fast_atan2;
 use super::pitch::inner_prod_rs;
+use std::f32::consts::FRAC_2_PI;
 use std::os::raw::*;
 use std::slice;
 
@@ -51,7 +52,7 @@ unsafe fn exp_rotation_1(x: *mut celt_norm, off: usize, len: usize, stride: usiz
 }
 
 #[no_mangle]
-pub extern "C" fn exp_rotation(
+pub unsafe extern "C" fn exp_rotation(
 	x: *mut celt_norm,
 	len: c_int,
 	dir: c_int,
@@ -87,24 +88,22 @@ pub extern "C" fn exp_rotation(
 	// not B, for both this and for extract_collapse_mask()
 	let len = celt_udiv(len as c_uint, stride as c_uint) as usize;
 	for i in 0..stride as usize {
-		unsafe {
-			if dir < 0 {
-				if stride2 > 0 {
-					exp_rotation_1(x, i * len, len, stride2 as usize, s, c);
-				}
-				exp_rotation_1(x, i * len, len, 1, c, s);
-			} else {
-				exp_rotation_1(x, i * len, len, 1, c, -s);
-				if stride2 > 0 {
-					exp_rotation_1(x, i * len, len, stride2 as usize, s, -c);
-				}
+		if dir < 0 {
+			if stride2 > 0 {
+				exp_rotation_1(x, i * len, len, stride2 as usize, s, c);
+			}
+			exp_rotation_1(x, i * len, len, 1, c, s);
+		} else {
+			exp_rotation_1(x, i * len, len, 1, c, -s);
+			if stride2 > 0 {
+				exp_rotation_1(x, i * len, len, stride2 as usize, s, -c);
 			}
 		}
 	}
 }
 
 #[no_mangle]
-pub extern "C" fn op_pvq_search_c(
+pub unsafe extern "C" fn op_pvq_search_c(
 	x: *mut celt_norm,
 	iy: *mut c_int,
 	k: c_int,
@@ -112,8 +111,8 @@ pub extern "C" fn op_pvq_search_c(
 	_arch: c_int,
 ) -> v16 {
 	let n = ni as usize;
-	let x = unsafe { slice::from_raw_parts_mut(x, n) };
-	let iy = unsafe { slice::from_raw_parts_mut(iy, n) };
+	let x = slice::from_raw_parts_mut(x, n);
+	let iy = slice::from_raw_parts_mut(iy, n);
 	let mut y = Vec::with_capacity(n);
 	// Get rid of the sign
 	let mut signx = Vec::with_capacity(n);
@@ -261,7 +260,7 @@ to 1. This is the function that will typically require the most CPU.
 
 Returns a mask indicating which blocks in the band received pulses.
 */
-pub extern "C" fn alg_quant(
+pub unsafe extern "C" fn alg_quant(
 	x: *mut celt_norm,
 	n: c_int,
 	k: c_int,
@@ -277,14 +276,11 @@ pub extern "C" fn alg_quant(
 
 	// Covers vectorization by up to 4.
 	let mut iy = vec![0; n as usize + 3];
-
 	exp_rotation(x, n, 1, b, k, spread);
 
 	let yy = op_pvq_search_c(x, iy.as_mut_ptr(), k, n, arch);
 
-	unsafe {
-		encode_pulses(iy.as_mut_ptr(), n, k, enc);
-	}
+	encode_pulses(iy.as_mut_ptr(), n, k, enc);
 
 	if resynth != 0 {
 		normalize_residual(&mut iy, x, n as usize, yy, gain);
@@ -305,7 +301,7 @@ Algebraic pulse decoder.
 
 Returns a mask indicating which blocks in the band received pulses.
 */
-pub extern "C" fn alg_unquant(
+pub unsafe extern "C" fn alg_unquant(
 	x: *mut celt_norm,
 	n: c_int,
 	k: c_int,
@@ -318,16 +314,16 @@ pub extern "C" fn alg_unquant(
 	assert!(n > 1, "at least two dimensions required");
 
 	let mut iy = vec![0; n as usize];
-	let ryy = unsafe { decode_pulses(iy.as_mut_ptr(), n, k, dec) };
-	normalize_residual(&mut iy, x, n as usize, ryy, gain);
+	let ryy = decode_pulses(iy.as_mut_ptr(), n, k, dec);
+	normalize_residual(&iy, x, n as usize, ryy, gain);
 	exp_rotation(x, n, -1, b, k, spread);
 	extract_collapse_mask(&iy, n as usize, b as usize)
 }
 
 #[no_mangle]
-pub extern "C" fn renormalise_vector(x: *mut celt_norm, n: c_int, gain: v16, _arch: c_int) {
+pub unsafe extern "C" fn renormalise_vector(x: *mut celt_norm, n: c_int, gain: v16, _arch: c_int) {
 	let n = n as usize;
-	let x = unsafe { slice::from_raw_parts_mut(x, n) };
+	let x = slice::from_raw_parts_mut(x, n);
 	let e = EPSILON + inner_prod_rs(x, x);
 	let t = vshr32!(e, 2 * (k - 7));
 	let g = mul16_16_p15!(rsqrt_norm!(t), gain);
@@ -337,7 +333,7 @@ pub extern "C" fn renormalise_vector(x: *mut celt_norm, n: c_int, gain: v16, _ar
 }
 
 #[no_mangle]
-pub extern "C" fn stereo_itheta(
+pub unsafe extern "C" fn stereo_itheta(
 	x: *const celt_norm,
 	y: *const celt_norm,
 	stereo: c_int,
@@ -345,8 +341,8 @@ pub extern "C" fn stereo_itheta(
 	_arch: c_int,
 ) -> c_int {
 	let n = n as usize;
-	let x = unsafe { slice::from_raw_parts(x, n) };
-	let y = unsafe { slice::from_raw_parts(y, n) };
+	let x = slice::from_raw_parts(x, n);
+	let y = slice::from_raw_parts(y, n);
 
 	let mut emid = EPSILON;
 	let mut eside = EPSILON;
@@ -363,6 +359,6 @@ pub extern "C" fn stereo_itheta(
 	}
 	let mid = sqrt!(emid);
 	let side = sqrt!(eside);
-	let itheta = (0.5 + 16384.0 * 0.63662 * fast_atan2(side, mid)).floor();
+	let itheta = (0.5 + 16384.0 * FRAC_2_PI * fast_atan2(side, mid)).floor();
 	itheta as c_int
 }

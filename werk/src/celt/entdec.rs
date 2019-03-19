@@ -229,7 +229,7 @@ No call to ec_dec_update() is necessary after this call.
 
 Return: The decoded symbol `s`.
 */
-pub extern "C" fn ec_dec_icdf(this: &mut ec_dec, icdf: *const u8, ftb: c_uint) -> c_int {
+pub unsafe extern "C" fn ec_dec_icdf(this: &mut ec_dec, icdf: *const u8, ftb: c_uint) -> c_int {
 	let mut s = this.rng;
 	let d = this.val;
 	let r = s >> ftb;
@@ -238,9 +238,7 @@ pub extern "C" fn ec_dec_icdf(this: &mut ec_dec, icdf: *const u8, ftb: c_uint) -
 	loop {
 		t = s;
 		ret += 1;
-		unsafe {
-			s = r * u32::from(ptr::read(icdf.offset(ret as isize)));
-		}
+		s = r * u32::from(ptr::read(icdf.offset(ret as isize)));
 		if d >= s {
 			break;
 		}

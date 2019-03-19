@@ -61,7 +61,7 @@ files_fn! { celt_files;
 	celt/modes.c,
 	// celt/pitch.c,
 	// celt/celt_lpc.c,
-	celt/quant_bands.c,
+	// celt/quant_bands.c,
 	celt/rate.c,
 	// celt/vq.c
 }
