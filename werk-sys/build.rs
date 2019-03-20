@@ -36,7 +36,7 @@ files_fn! { opus_files;
 	src/opus_multistream.c,
 	src/opus_multistream_encoder.c,
 	src/opus_multistream_decoder.c,
-	src/repacketizer.c
+	// src/repacketizer.c
 }
 
 files_fn! { opus_files_float;
