@@ -67,8 +67,8 @@ fn celt_fir5(x: &mut [v16], num: &[v16]) {
 	let mut mem2 = 0.0;
 	let mut mem3 = 0.0;
 	let mut mem4 = 0.0;
-	for i in 0..x.len() {
-		let mut sum = shl32!(extend32!(x[i]), SIG_SHIFT);
+	for i in x {
+		let mut sum = *shl32!(extend32!(i), SIG_SHIFT);
 		sum = mac16_16!(sum, num0, mem0);
 		sum = mac16_16!(sum, num1, mem1);
 		sum = mac16_16!(sum, num2, mem2);
@@ -78,8 +78,8 @@ fn celt_fir5(x: &mut [v16], num: &[v16]) {
 		mem3 = mem2;
 		mem2 = mem1;
 		mem1 = mem0;
-		mem0 = x[i];
-		x[i] = round16!(sum, SIG_SHIFT);
+		mem0 = *i;
+		*i = round16!(sum, SIG_SHIFT);
 	}
 }
 
@@ -135,9 +135,9 @@ pub unsafe extern "C" fn pitch_downsample(
 	_celt_lpc((&mut lpc).as_mut_ptr(), (&mut ac).as_mut_ptr(), 4);
 
 	let mut tmp = Q15ONE;
-	for i in 0..4 {
+	for i in &mut lpc {
 		tmp *= 0.9;
-		lpc[i] *= tmp;
+		*i *= tmp;
 	}
 	let mut lpc2 = [0.0; 5];
 	let c1 = qconst16!(0.8, 15);

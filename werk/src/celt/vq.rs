@@ -133,8 +133,8 @@ pub unsafe extern "C" fn op_pvq_search_c(
 		// to be allocated. 64 is an approximation of infinity here.
 		if !(sum > EPSILON && sum < 64.0) {
 			x[0] = qconst16!(1.0, 14);
-			for j in 1..n {
-				x[j] = 0.0;
+			for j in x.iter_mut().take(n).skip(1) {
+				*j = 0.0;
 			}
 			sum = qconst16!(1.0, 14);
 		}
@@ -283,7 +283,7 @@ pub unsafe extern "C" fn alg_quant(
 	encode_pulses(iy.as_mut_ptr(), n, k, enc);
 
 	if resynth != 0 {
-		normalize_residual(&mut iy, x, n as usize, yy, gain);
+		normalize_residual(&iy, x, n as usize, yy, gain);
 		exp_rotation(x, n, -1, b, k, spread);
 	}
 
