@@ -50,7 +50,7 @@ files_fn! { celt_files;
 	celt/celt.c,
 	celt/celt_encoder.c, // encoder -- not a priority ATM
 	celt/celt_decoder.c,
-	celt/cwrs.c,
+	// celt/cwrs.c,
 	// celt/entcode.c, -- SMALL_DIV_TABLE still missing
 	// celt/entdec.c,
 	celt/entenc.c, // encoder -- not a priority ATM
