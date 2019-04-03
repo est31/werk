@@ -58,7 +58,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
-
+use std::os::raw::*;
 pub type __int8_t = c_schar;
 pub type __uint8_t = c_uchar;
 pub type int8_t = __int8_t;

@@ -1,5 +1,5 @@
-use libc;
-pub type __int16_t = libc::c_short;
+use std::os::raw::*;
+pub type __int16_t = c_short;
 pub type int16_t = __int16_t;
 pub type opus_int16 = int16_t;
 /* Rom table with cosine values */

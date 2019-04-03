@@ -1,4 +1,4 @@
-
+use std::os::raw::*;
 pub type __int16_t = c_short;
 pub type __int32_t = c_int;
 pub type __uint32_t = c_uint;
@@ -12,8 +12,8 @@ fn silk_CLZ32(mut in32: opus_int32) -> opus_int32 {
     return if 0 != in32 {
                32 -
                   unsafe{ (::std::mem::size_of::<c_uint>() as c_ulong as
-                        c_int * 8 -
-                        (in32 as c_uint).leading_zeros() as ) }
+                        c_int * 8i32 -
+                        (in32 as c_uint).leading_zeros() as opus_int32) }
            } else { 32 };
 }
 /* Compute number of bits to right shift the sum of squares of a vector    */

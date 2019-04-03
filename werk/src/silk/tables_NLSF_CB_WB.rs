@@ -24,6 +24,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
+use std::os::raw::*;
 pub type __uint8_t = c_uchar;
 pub type __int16_t = c_short;
 pub type __int32_t = c_int;
@@ -60,7 +61,7 @@ pub static mut silk_NLSF_CB_WB: silk_NLSF_CB_struct =
         silk_NLSF_CB_struct{nVectors: 32i32 as opus_int16,
                             order: 16i32 as opus_int16,
                             quantStepSize_Q16:
-                                (0.15f64 *
+                                (0.15i16 *
                                      ((1i32 as opus_int64) << 16i32) as
                                          c_double + 0.5f64) as
                                     opus_int32 as opus_int16,

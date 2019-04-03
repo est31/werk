@@ -1,4 +1,4 @@
-
+use std::os::raw::*;
 pub type __uint8_t = c_uchar;
 pub type uint8_t = __uint8_t;
 pub type opus_uint8 = uint8_t;
